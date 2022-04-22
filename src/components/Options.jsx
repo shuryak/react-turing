@@ -75,7 +75,7 @@ export const Options = ({onOptionsChanged}) => {
         />
       </label>
 
-      <label><p>Начальное положение головки:</p>
+      <label><p>Положение головки:</p>
         <input
           type="number"
           name="head-start-index-input"

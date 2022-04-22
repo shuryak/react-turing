@@ -20,10 +20,31 @@ export const Tape = () => {
   useEffect(() => {
     setTape(prevState =>
     {
+      const array = [...prevState.array]
+      let headStartIndex = context.headStartIndex
+
+      if (context.tapeLength > prevState.array.length) {
+        const elementsToAddCount = context.tapeLength - prevState.array.length
+
+        for (let i = 0; i < elementsToAddCount; i++) {
+          array.push('0')
+        }
+      } else if (context.tapeLength < prevState.array.length) {
+        const elementsToRemoveCount = prevState.array.length - context.tapeLength
+
+        array.splice(-1, elementsToRemoveCount)
+      }
+
+      if (headStartIndex > array.length - 1) {
+        headStartIndex = array.length - 1
+      }
+
       return {
         ...tape,
-        headIndex: context.headStartIndex,
-        instructions: instructionsArrayTakeApart(context.instructions)}
+        array,
+        headIndex: headStartIndex,
+        instructions: instructionsArrayTakeApart(context.instructions)
+      }
     })
   }, [context])
 
