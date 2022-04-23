@@ -1,7 +1,10 @@
-import React, {useEffect, useState} from 'react'
+import React, {useContext, useEffect, useState} from 'react'
+import InstructionsContext from '@/components/Context'
 
 export const Options = ({onOptionsChanged}) => {
-  const [options, setOptions] = useState(getDefaultOptions)
+  const context = useContext(InstructionsContext)
+
+  const [options, setOptions] = useState(context)
 
   const [code, setCode] = useState('')
 
@@ -12,14 +15,6 @@ export const Options = ({onOptionsChanged}) => {
   useEffect(() => {
     onOptionsChanged(options)
   }, [options])
-
-  function getDefaultOptions() {
-    return {
-      instructions: [],
-      tapeLength: 10,
-      headStartIndex: 2
-    }
-  }
 
   function handleFileChange(event) {
     const file = event.target.files[0]
@@ -46,13 +41,25 @@ export const Options = ({onOptionsChanged}) => {
 
   function handleHeadStartIndexChange(event) {
     setOptions(prevState => {
-      return {...prevState, headStartIndex: +event.target.value - 1}
+      return {...prevState, headIndex: +event.target.value - 1}
     })
   }
 
   function handleTapeLengthChange(event) {
     setOptions(prevState => {
       return {...prevState, tapeLength: +event.target.value}
+    })
+  }
+
+  function handleVarChange(event, index) {
+    setOptions(prevState => {
+      const vars = [...prevState.vars]
+      vars[index] = +event.target.value
+
+      return {
+        ...prevState,
+        vars
+      }
     })
   }
 
@@ -83,7 +90,7 @@ export const Options = ({onOptionsChanged}) => {
           min={1}
           max={options.tapeLength}
           onChange={handleHeadStartIndexChange}
-          defaultValue={options.headStartIndex}
+          defaultValue={options.headIndex}
         />
       </label>
 
@@ -94,8 +101,25 @@ export const Options = ({onOptionsChanged}) => {
           id="tape-length-input"
           min={1}
           onChange={handleTapeLengthChange}
-          defaultValue={options.tapeLength}
+          value={options.tapeLength}
         />
+      </label>
+
+      <label><p>Переменные:</p>
+        {options.vars.map((variable, idx) => {
+          return (
+            <input
+              className="var-inout"
+              type="number"
+              name={'var' + idx}
+              id={'var' + idx}
+              min={0}
+              value={variable}
+              key={idx}
+              onChange={e => handleVarChange(e, idx)}
+            />
+          )
+        })}
       </label>
     </div>
   )

@@ -6,9 +6,11 @@ export const Tape = () => {
 
   const [tape, setTape] = useState(getDefaultTape())
 
+  const [varsCells, setVarCells] = useState(0)
+
   function getDefaultTape() {
     return {
-      headIndex: context.headStartIndex,
+      headIndex: context.headIndex,
       state: 'q1',
       array: new Array(context.tapeLength).fill('0'),
       iterationsCount: 0,
@@ -17,35 +19,83 @@ export const Tape = () => {
     }
   }
 
-  useEffect(() => {
-    setTape(prevState =>
-    {
+  function changeTapeLength(tapeLength) {
+    setTape(prevState => {
       const array = [...prevState.array]
-      let headStartIndex = context.headStartIndex
 
-      if (context.tapeLength > prevState.array.length) {
-        const elementsToAddCount = context.tapeLength - prevState.array.length
+      if (tapeLength > prevState.array.length) {
+        const elementsToAddCount = tapeLength - prevState.array.length
 
         for (let i = 0; i < elementsToAddCount; i++) {
           array.push('0')
         }
-      } else if (context.tapeLength < prevState.array.length) {
-        const elementsToRemoveCount = prevState.array.length - context.tapeLength
+      } else if (tapeLength < prevState.array.length) {
+        const elementsToRemoveCount = prevState.array.length - tapeLength
 
         array.splice(-1, elementsToRemoveCount)
       }
 
-      if (headStartIndex > array.length - 1) {
-        headStartIndex = array.length - 1
+      return {
+        ...prevState,
+        array
+      }
+    })
+  }
+
+  function changeHeadIndex(headIndex) {
+    setTape(prevState => {
+      let updatedHeadIndex= headIndex
+
+      if (updatedHeadIndex > prevState.array.length - 1) {
+        updatedHeadIndex = prevState.array.length - 1
       }
 
       return {
-        ...tape,
-        array,
-        headIndex: headStartIndex,
-        instructions: instructionsArrayTakeApart(context.instructions)
+        ...prevState,
+        newHeadIndex: updatedHeadIndex
       }
     })
+  }
+
+  function changeVars(vars) {
+    setTape(prevState => {
+      let array = [...prevState.array]
+      let varsStartIndex = context.headIndex;
+
+      for (let i = 0; i < varsCells; i++) {
+        array[varsStartIndex + i] = '0'
+      }
+
+      setVarCells(prevState => {
+        let length = vars.length - 1;
+        for (let i = 0; i < vars.length; i++) {
+          length += vars[i] + 1
+        }
+
+        return length
+      })
+
+      for (let i = 0; i < vars.length; i++) {
+        for (let j = 0; j <= vars[i]; j++) {
+          array[varsStartIndex + j] = '1'
+
+          if (j === vars[i]) {
+            varsStartIndex += j + 2
+          }
+        }
+      }
+
+      return {
+        ...prevState,
+        array
+      }
+    })
+  }
+
+  useEffect(() => {
+    changeTapeLength(context.tapeLength)
+    changeHeadIndex(context.headIndex)
+    changeVars(context.vars)
   }, [context])
 
   function step() {
@@ -111,6 +161,20 @@ export const Tape = () => {
     return result
   }
 
+  function handleCellClick(element, idx) {
+    const newElement = element === '0' ? '1' : '0';
+
+    setTape(prevState => {
+      const array = [...prevState.array]
+      array[idx] = newElement
+
+      return {
+        ...prevState,
+        array
+      }
+    })
+  }
+
   return (
     <div className="tape">
       <table>
@@ -127,13 +191,13 @@ export const Tape = () => {
           </tr>
           <tr className="tape-values">
             {tape.array.map((element, idx) =>
-              <td key={idx}>{element}</td>
+              <td key={idx} onClick={() => handleCellClick(element, idx)}>{element}</td>
             )}
           </tr>
         </tbody>
       </table>
-      <button style={{zoom: 3}} onClick={step}>STEP</button>
-      <button style={{zoom: 2}} onClick={() => setTape(getDefaultTape())}>To default</button>
+      <button style={{zoom: 3}} onClick={step}>Сделать шаг</button>
+      <button style={{zoom: 2}} onClick={() => setTape(getDefaultTape())}>Восстановить</button>
     </div>
   )
 }
