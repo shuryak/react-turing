@@ -11,13 +11,15 @@ export const Tape = () => {
     isFinished: false,
   })
 
+  const [varsStartIndex, setVarsStartIndex] = useState(context.headIndex)
   const [varsCells, setVarCells] = useState(0)
 
   function getUpdatedTape() {
     let updatedTape = getNewTape(tape.array, context.tapeLength)
     const headIndex = getHeadIndex(tape.array, context.headIndex)
     const instructions = getInstructionsSet(context.instructions)
-    updatedTape = putVars(updatedTape, headIndex, context.vars)
+    updatedTape = putVars(updatedTape, varsStartIndex, headIndex, context.vars)
+    setVarsStartIndex(headIndex)
 
     return {
       headIndex,
@@ -69,12 +71,21 @@ export const Tape = () => {
     return updatedHeadIndex
   }
 
-  function putVars(tapeArray, headIndex, vars) {
+  function putVars(tapeArray, lastVarsStartIndex, currentVarsStartIndex, vars) {
     let array = tapeArray
-    let varsStartIndex = headIndex;
+
+    if (currentVarsStartIndex > lastVarsStartIndex) {
+      for (let i = 0; i < currentVarsStartIndex; i++) {
+        array[lastVarsStartIndex + i] = '0'
+      }
+    } else if (currentVarsStartIndex < lastVarsStartIndex) {
+      for (let i = 0; i < currentVarsStartIndex; i++) {
+        array[currentVarsStartIndex + varsCells + i] = '0'
+      }
+    }
 
     for (let i = 0; i < varsCells; i++) {
-      array[varsStartIndex + i] = '0'
+      array[currentVarsStartIndex + i] = '0'
     }
 
     setVarCells(prevState => {
@@ -88,10 +99,10 @@ export const Tape = () => {
 
     for (let i = 0; i < vars.length; i++) {
       for (let j = 0; j <= vars[i]; j++) {
-        array[varsStartIndex + j] = '1'
+        array[currentVarsStartIndex + j] = '1'
 
         if (j === vars[i]) {
-          varsStartIndex += j + 2
+          currentVarsStartIndex += j + 2
         }
       }
     }
