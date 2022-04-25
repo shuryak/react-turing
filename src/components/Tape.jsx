@@ -4,99 +4,100 @@ import InstructionsContext from '@/components/Context'
 export const Tape = () => {
   const context = useContext(InstructionsContext)
 
-  const [tape, setTape] = useState(getDefaultTape())
+  const [tape, setTape] = useState({
+    state: 'q1',
+    array: new Array(context.tapeLength).fill('0'),
+    iterationsCount: 0,
+    isFinished: false,
+  })
 
   const [varsCells, setVarCells] = useState(0)
 
-  function getDefaultTape() {
+  function getUpdatedTape() {
+    let updatedTape = getNewTape(tape.array, context.tapeLength)
+    const headIndex = getHeadIndex(tape.array, context.headIndex)
+    const instructions = getInstructionsSet(context.instructions)
+    updatedTape = putVars(updatedTape, headIndex, context.vars)
+
     return {
-      headIndex: context.headIndex,
+      headIndex,
       state: 'q1',
-      array: new Array(context.tapeLength).fill('0'),
+      array: updatedTape,
       iterationsCount: 0,
       isFinished: false,
-      instructions: instructionsArrayTakeApart(context.instructions)
+      instructions
     }
   }
 
-  function changeTapeLength(tapeLength) {
-    setTape(prevState => {
-      const array = [...prevState.array]
-
-      if (tapeLength > prevState.array.length) {
-        const elementsToAddCount = tapeLength - prevState.array.length
-
-        for (let i = 0; i < elementsToAddCount; i++) {
-          array.push('0')
-        }
-      } else if (tapeLength < prevState.array.length) {
-        const elementsToRemoveCount = prevState.array.length - tapeLength
-
-        array.splice(-1, elementsToRemoveCount)
-      }
-
-      return {
-        ...prevState,
-        array
-      }
-    })
-  }
-
-  function changeHeadIndex(headIndex) {
-    setTape(prevState => {
-      let updatedHeadIndex= headIndex
-
-      if (updatedHeadIndex > prevState.array.length - 1) {
-        updatedHeadIndex = prevState.array.length - 1
-      }
-
-      return {
-        ...prevState,
-        newHeadIndex: updatedHeadIndex
-      }
-    })
-  }
-
-  function changeVars(vars) {
-    setTape(prevState => {
-      let array = [...prevState.array]
-      let varsStartIndex = context.headIndex;
-
-      for (let i = 0; i < varsCells; i++) {
-        array[varsStartIndex + i] = '0'
-      }
-
-      setVarCells(prevState => {
-        let length = vars.length - 1;
-        for (let i = 0; i < vars.length; i++) {
-          length += vars[i] + 1
-        }
-
-        return length
-      })
-
-      for (let i = 0; i < vars.length; i++) {
-        for (let j = 0; j <= vars[i]; j++) {
-          array[varsStartIndex + j] = '1'
-
-          if (j === vars[i]) {
-            varsStartIndex += j + 2
-          }
-        }
-      }
-
-      return {
-        ...prevState,
-        array
-      }
-    })
-  }
+  useEffect(() => {
+    setTape(getUpdatedTape())
+  }, [])
 
   useEffect(() => {
-    changeTapeLength(context.tapeLength)
-    changeHeadIndex(context.headIndex)
-    changeVars(context.vars)
+    setTape(getUpdatedTape())
   }, [context])
+
+  function getInstructionsSet(instructionsArray) {
+    return instructionsArrayTakeApart(instructionsArray)
+  }
+
+  function getNewTape(prevTapeArray, tapeLength) {
+    const array = prevTapeArray
+
+    if (tapeLength > array.length) {
+      const elementsToAddCount = tapeLength - array.length
+
+      for (let i = 0; i < elementsToAddCount; i++) {
+        array.push('0')
+      }
+    } else if (tapeLength < array.length) {
+      const elementsToRemoveCount = array.length - tapeLength
+
+      array.splice(-1, elementsToRemoveCount)
+    }
+
+    return array
+  }
+
+  function getHeadIndex(tapeArray, headIndex) {
+    let updatedHeadIndex = headIndex
+
+    if (updatedHeadIndex > tapeArray.length - 1) {
+      updatedHeadIndex = tapeArray.length - 1
+    }
+
+    return updatedHeadIndex
+  }
+
+  function putVars(tapeArray, headIndex, vars) {
+    let array = tapeArray
+    let varsStartIndex = headIndex;
+
+    for (let i = 0; i < varsCells; i++) {
+      array[varsStartIndex + i] = '0'
+    }
+
+    setVarCells(prevState => {
+      let length = vars.length - 1;
+      for (let i = 0; i < vars.length; i++) {
+        length += vars[i] + 1
+      }
+
+      return length
+    })
+
+    for (let i = 0; i < vars.length; i++) {
+      for (let j = 0; j <= vars[i]; j++) {
+        array[varsStartIndex + j] = '1'
+
+        if (j === vars[i]) {
+          varsStartIndex += j + 2
+        }
+      }
+    }
+
+    return array
+  }
 
   function step() {
     if (tape.isFinished) return
@@ -109,6 +110,9 @@ export const Tape = () => {
 
     setTape(prevState => {
       let headIndex = prevState.headIndex
+      let array = [...prevState.array]
+
+      array[headIndex] = newValue
 
       if (direction === 'R') {
         headIndex++
@@ -116,12 +120,9 @@ export const Tape = () => {
         headIndex--
       }
 
-      if (tape.array[headIndex] === undefined) {
-        tape.array[headIndex] = '0'
+      if (array[headIndex] === undefined) {
+        array[headIndex] = '0'
       }
-
-      let updatedArray = prevState.array
-      updatedArray[prevState.headIndex] = newValue
 
       let iterationsCount = prevState.iterationsCount + 1;
       let isFinished = false
@@ -137,7 +138,7 @@ export const Tape = () => {
         headIndex,
         iterationsCount,
         isFinished,
-        updatedArray
+        array
       }
     })
   }
@@ -197,7 +198,7 @@ export const Tape = () => {
         </tbody>
       </table>
       <button style={{zoom: 3}} onClick={step}>Сделать шаг</button>
-      <button style={{zoom: 2}} onClick={() => setTape(getDefaultTape())}>Восстановить</button>
+      <button style={{zoom: 2}} onClick={() => setTape(getUpdatedTape())}>Восстановить</button>
     </div>
   )
 }

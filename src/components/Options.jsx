@@ -40,21 +40,42 @@ export const Options = ({onOptionsChanged}) => {
   }
 
   function handleHeadStartIndexChange(event) {
+    let updatedValue = +event.target.value
+    if (updatedValue < 1) {
+      updatedValue = 1
+    } else if (updatedValue > options.tapeLength) {
+      updatedValue = options.tapeLength
+    }
+
     setOptions(prevState => {
-      return {...prevState, headIndex: +event.target.value - 1}
+      return {...prevState, headIndex: updatedValue - 1}
     })
   }
 
   function handleTapeLengthChange(event) {
+    let updatedValue = +event.target.value
+    if (updatedValue < 1) {
+      updatedValue = 1
+    } else if (updatedValue > 1000) { // TODO: magic number
+      updatedValue = 1000
+    }
+    
     setOptions(prevState => {
-      return {...prevState, tapeLength: +event.target.value}
+      return {...prevState, tapeLength: updatedValue}
     })
   }
 
   function handleVarChange(event, index) {
+    let updatedValue = +event.target.value
+    if (updatedValue < 0) {
+      updatedValue = 0
+    } else if (updatedValue > 1000) { // TODO: magic number
+      updatedValue = 1000
+    }
+
     setOptions(prevState => {
       const vars = [...prevState.vars]
-      vars[index] = +event.target.value
+      vars[index] = updatedValue
 
       return {
         ...prevState,
@@ -90,7 +111,7 @@ export const Options = ({onOptionsChanged}) => {
           min={1}
           max={options.tapeLength}
           onChange={handleHeadStartIndexChange}
-          defaultValue={options.headIndex}
+          value={options.headIndex + 1}
         />
       </label>
 
